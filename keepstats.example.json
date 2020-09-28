@@ -1,0 +1,27 @@
+{
+    "pg": "postgres://template:MTcwNzUyNzIzMDY4Nzk2MzQ3Mjg=@test1:5432/templatedb?timeout=60&serverTimezone=+00:00",
+    "redis": "redis://127.0.0.1",
+    "listen": "0.0.0.0:8080",
+    "jwt_priv": "0xa06f853898a9dd4f32441a56879c52878f96c42730ed31c50e00",
+    "maxminddb": "/Users/biluohc/ethfans.org/xmonitor/achen/GeoLite2-City.mmdb",
+    "keep": {
+        "request_timeout": 5,
+        "poll_interval": 60,
+        "urls": [
+            {
+                "netid": 3,
+                "keep_core": [
+                    "http://127.0.0.1:3911/diagnostics"
+                ],
+                "keep_ecdsa": []
+            },
+            {
+                "netid": 1,
+                "keep_core": [
+                    // "http://127.0.0.1:3911/diagnostics"
+                ],
+                "keep_ecdsa": []
+            }
+        ]
+    }
+}

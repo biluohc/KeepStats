@@ -1,0 +1,24 @@
+From debian:10.0
+WORKDIR /opt
+
+ARG APP=keepstats
+
+RUN set -eux; \
+    apt-get update && apt-get install -y \
+    curl \
+    tzdata \
+    libssl-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt
+
+COPY ./target/release/${APP} /usr/local/bin/
+
+ENV APP=${APP}
+
+RUN $APP -V
+
+CMD $APP -v
+
+# docker run --rm -it --network host -v $PWD:/opt --name keepstats keepstats-prod keepstats -V
+# docker run -d --restart always --network host -v $PWD:/opt --name keepstats keepstats-prod
+

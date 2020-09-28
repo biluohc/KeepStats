@@ -1,0 +1,23 @@
+From debian:10.0 as builder
+WORKDIR /opt
+
+RUN set -eux; \
+    apt-get update && apt-get install -y \
+    sudo \
+    curl \
+    gcc \
+    file \
+    git \
+    pkg-config \
+    libssl-dev \
+    zlib1g-dev \
+    cmake \
+    g++ && \
+    apt-get clean && \
+    rm -rf /var/lib/apt
+
+# nightly-2020-09-24 or 1.42.0
+RUN set -eux; \
+    curl -sSf https://sh.rustup.rs | sh -s -- -y --profile=minimal --default-toolchain=nightly-2020-09-24
+
+ENV PATH="/root/.cargo/bin:${PATH}"
