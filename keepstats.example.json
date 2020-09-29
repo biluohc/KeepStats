@@ -3,10 +3,10 @@
     "redis": "redis://127.0.0.1",
     "listen": "0.0.0.0:8080",
     "jwt_priv": "0xa06f853898a9dd4f32441a56879c52878f96c42730ed31c50e00",
-    "maxminddb": "/Users/biluohc/ethfans.org/xmonitor/achen/GeoLite2-City.mmdb",
+    "maxminddb": "../GeoLite2-City.mmdb",
     "keep": {
         "request_timeout": 5,
-        "poll_interval": 60,
+        "poll_interval": 20,
         "urls": [
             {
                 "netid": 3,

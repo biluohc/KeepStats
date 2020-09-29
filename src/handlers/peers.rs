@@ -18,7 +18,9 @@ async fn peers(state: AppState, form: web::Query<Form>) -> impl Responder {
     form.kind = form.kind.to_lowercase();
 
     if form.netid > 3 {
-        return ApiResult::new().code(400).with_msg("invalid ethereum netid");
+        return ApiResult::new()
+            .code(400)
+            .with_msg("invalid ethereum netid");
     }
 
     let peers = match sqlx::query_as!(
@@ -43,7 +45,10 @@ async fn peers(state: AppState, form: web::Query<Form>) -> impl Responder {
     };
     debug!("get peers by {:?} ok: {}", form, peers.len());
 
-    let json = peers.iter().map(|p| state.json_with_location(&p)).collect::<Vec<_>>();
+    let json = peers
+        .iter()
+        .map(|p| state.json_with_location(&p))
+        .collect::<Vec<_>>();
 
     ApiResult::new().with_data(json)
 }

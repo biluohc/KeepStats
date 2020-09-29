@@ -17,12 +17,30 @@ pub fn poll_keepstats(state: &State) {
         .expect("new reqwest::Client");
 
     for keep_info in &keep.urls {
-        spawn(loop_poll_peers(state.clone(), client.clone(), keep_info.keep_core.clone(), keep_info.netid, "keep_core"));
-        spawn(loop_poll_peers(state.clone(), client.clone(), keep_info.keep_ecdsa.clone(), keep_info.netid, "keep_ecdsa"));
+        spawn(loop_poll_peers(
+            state.clone(),
+            client.clone(),
+            keep_info.keep_core.clone(),
+            keep_info.netid,
+            "keep_core",
+        ));
+        spawn(loop_poll_peers(
+            state.clone(),
+            client.clone(),
+            keep_info.keep_ecdsa.clone(),
+            keep_info.netid,
+            "keep_ecdsa",
+        ));
     }
 }
 
-async fn loop_poll_peers(state: State, client: Client, urls: Vec<String>, netid: u64, kind: &'static str) {
+async fn loop_poll_peers(
+    state: State,
+    client: Client,
+    urls: Vec<String>,
+    netid: u64,
+    kind: &'static str,
+) {
     if urls.is_empty() {
         return;
     }
@@ -32,7 +50,12 @@ async fn loop_poll_peers(state: State, client: Client, urls: Vec<String>, netid:
         for url in &urls {
             poll_peers(&state, &client, url.as_str(), netid, kind)
                 .await
-                .map(|(n, rows)| info!("poll_peers({}, {}) from {} got {} peers, {} rows affected", netid, kind, url, n, rows))
+                .map(|(n, rows)| {
+                    info!(
+                        "poll_peers({}, {}) from {} got {} peers, {} rows affected",
+                        netid, kind, url, n, rows
+                    )
+                })
                 .map_err(|e| error!("poll_peers({}, {}) from {} failed {}", netid, kind, url, e))
                 .ok();
         }
@@ -48,7 +71,7 @@ pub struct KeepClientInfo {
     ethereum_address: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct KeepPeer {
     network_id: String,
     network_addr: String,
@@ -65,25 +88,45 @@ pub struct KeepPeers {
     connected_peers: Vec<KeepPeer>,
 }
 
-async fn poll_peers(state: &State, client: &Client, url: &str, netid: u64, kind: &str) -> AnyResult<(u64, u64)> {
+async fn poll_peers(
+    state: &State,
+    client: &Client,
+    url: &str,
+    netid: u64,
+    kind: &str,
+) -> AnyResult<(u64, u64)> {
     let peersif = client.get(url).send().await?.json::<KeepPeers>().await?;
     let mut peers = Vec::with_capacity(peersif.connected_peers.len() + 1);
 
     let sa_check = |a: &str, who: &str| {
         a.parse::<SocketAddr>()
-            .map_err(|e| error!("{}.{}'s {}.network_addr {} isn't SocketAddr: {}", kind, url, who, a, e))
+            .map_err(|e| {
+                error!(
+                    "{}.{}'s {}.network_addr {} isn't SocketAddr: {}",
+                    kind, url, who, a, e
+                )
+            })
             .ok()
             .and_then(|sa| {
                 if sa.ip().is_global() {
                     Some(sa)
                 } else {
-                    error!("{}.{}'s {}.network_addr: {} isn't global SocketAddr", kind, url, who, a);
+                    error!(
+                        "{}.{}'s {}.network_addr: {} isn't global SocketAddr",
+                        kind, url, who, a
+                    );
                     None
                 }
             })
     };
 
-    if let Some(sa) = peersif.client_info.network_addrs.iter().filter_map(|a| sa_check(a, "client_info")).next() {
+    if let Some(sa) = peersif
+        .client_info
+        .network_addrs
+        .iter()
+        .filter_map(|a| sa_check(a, "client_info"))
+        .next()
+    {
         peers.push(KeepPeer {
             network_addr: sa.to_string(),
             network_ip: sa.ip().to_string(),
@@ -93,28 +136,32 @@ async fn poll_peers(state: &State, client: &Client, url: &str, netid: u64, kind:
         })
     }
 
-    let mut ethereum_address_nodes = Map::with_capacity(peers.len());
-    for (i, mut p) in peersif.connected_peers.into_iter().enumerate() {
+    let mut wallet_ip_nodes_map = Map::with_capacity(peers.len());
+    for mut p in peersif.connected_peers {
         if let Some(sa) = sa_check(&p.network_addr, &p.network_id) {
             p.ethereum_address = p.ethereum_address.to_lowercase();
             p.network_ip = sa.ip().to_string();
             p.network_port = sa.port();
 
             // Multiple nodes using the same wallet are multiple independent nodes?
-            let wallet_nodes = ethereum_address_nodes.entry(format!("{}.{}", p.ethereum_address, p.network_ip)).or_insert(vec![]);
-            wallet_nodes.push(i);
-            if wallet_nodes.len() > 1 {
+            let wallet_ip_nodes = wallet_ip_nodes_map
+                .entry(format!("{}.{}", p.ethereum_address, p.network_ip))
+                .or_insert(vec![]);
+            wallet_ip_nodes.push(p.network_port);
+
+            if wallet_ip_nodes.len() > 1 {
                 warn!(
-                    "{}.{}'s ethereum_address {} running more than one node {}: {:?}, skip it",
+                    "{}.{}'s ethereum_address {} running {} nodes on {} will skip it's[1..]: {:?}",
                     kind,
                     url,
                     p.ethereum_address,
-                    wallet_nodes.len(),
-                    p
+                    wallet_ip_nodes.len(),
+                    p.network_ip,
+                    wallet_ip_nodes
                 );
+            } else {
+                peers.push(p);
             }
-
-            peers.push(p);
         }
     }
 
@@ -125,7 +172,14 @@ async fn poll_peers(state: &State, client: &Client, url: &str, netid: u64, kind:
 
         let value = format!(
             "({}, '{}', '{}', '{}', {},'{}', '{}', '{}')",
-            netid, kind, peer.network_id, peer.network_ip, peer.network_port, peer.ethereum_address, peersif.client_info.datetime, peersif.client_info.datetime
+            netid,
+            kind,
+            peer.network_id,
+            peer.network_ip,
+            peer.network_port,
+            peer.ethereum_address,
+            peersif.client_info.datetime,
+            peersif.client_info.datetime
         );
         sql.push_str(&value);
 
