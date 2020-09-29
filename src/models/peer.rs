@@ -9,7 +9,8 @@ pub struct Peer {
     pub netid: i16,
     pub kind: String,
     pub network_id: String,
-    pub network_addr: String,
+    pub network_ip: String,
+    pub network_port: i32,
     pub ethereum_address: String,
     pub create_dt: DateTime,
     pub update_dt: DateTime,
@@ -17,6 +18,6 @@ pub struct Peer {
 
 impl AsRef<str> for Peer {
     fn as_ref(&self) -> &str {
-        &self.network_addr
+        &self.network_ip
     }
 }

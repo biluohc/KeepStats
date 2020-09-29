@@ -40,7 +40,7 @@ async fn loop_poll_peers(state: State, client: Client, urls: Vec<String>, netid:
     }
 }
 
-#[derive(FromRow, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct KeepClientInfo {
     datetime: String,
     network_id: String,
@@ -48,14 +48,18 @@ pub struct KeepClientInfo {
     ethereum_address: String,
 }
 
-#[derive(FromRow, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct KeepPeer {
     network_id: String,
     network_addr: String,
+    #[serde(default)]
+    network_ip: String,
+    #[serde(default)]
+    network_port: u16,
     ethereum_address: String,
 }
 
-#[derive(FromRow, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct KeepPeers {
     client_info: KeepClientInfo,
     connected_peers: Vec<KeepPeer>,
@@ -82,6 +86,8 @@ async fn poll_peers(state: &State, client: &Client, url: &str, netid: u64, kind:
     if let Some(sa) = peersif.client_info.network_addrs.iter().filter_map(|a| sa_check(a, "client_info")).next() {
         peers.push(KeepPeer {
             network_addr: sa.to_string(),
+            network_ip: sa.ip().to_string(),
+            network_port: sa.port(),
             network_id: peersif.client_info.network_id.clone(),
             ethereum_address: peersif.client_info.ethereum_address.to_lowercase(),
         })
@@ -89,11 +95,13 @@ async fn poll_peers(state: &State, client: &Client, url: &str, netid: u64, kind:
 
     let mut ethereum_address_nodes = Map::with_capacity(peers.len());
     for (i, mut p) in peersif.connected_peers.into_iter().enumerate() {
-        if sa_check(&p.network_addr, &p.network_id).is_some() {
+        if let Some(sa) = sa_check(&p.network_addr, &p.network_id) {
             p.ethereum_address = p.ethereum_address.to_lowercase();
+            p.network_ip = sa.ip().to_string();
+            p.network_port = sa.port();
 
             // Multiple nodes using the same wallet are multiple independent nodes?
-            let wallet_nodes = ethereum_address_nodes.entry(p.ethereum_address.clone()).or_insert(vec![]);
+            let wallet_nodes = ethereum_address_nodes.entry(format!("{}.{}", p.ethereum_address, p.network_ip)).or_insert(vec![]);
             wallet_nodes.push(i);
             if wallet_nodes.len() > 1 {
                 warn!(
@@ -111,13 +119,13 @@ async fn poll_peers(state: &State, client: &Client, url: &str, netid: u64, kind:
     }
 
     // INSERT into peers(netid, kind, network_id, ethereum_address, create_dt, update_dt) (),() on conflict (e2k) do update set update_dt=, network_id=
-    let mut sql = "INSERT into peers(netid, kind, network_id, network_addr, ethereum_address, create_dt, update_dt) values ".to_string();
+    let mut sql = "INSERT into peers(netid, kind, network_id, network_ip, network_port, ethereum_address, create_dt, update_dt) values ".to_string();
     for i in 0..peers.len() {
         let peer = &peers[i];
 
         let value = format!(
-            "({}, '{}', '{}', '{}','{}', '{}', '{}')",
-            netid, kind, peer.network_id, peer.network_addr, peer.ethereum_address, peersif.client_info.datetime, peersif.client_info.datetime
+            "({}, '{}', '{}', '{}', {},'{}', '{}', '{}')",
+            netid, kind, peer.network_id, peer.network_ip, peer.network_port, peer.ethereum_address, peersif.client_info.datetime, peersif.client_info.datetime
         );
         sql.push_str(&value);
 
@@ -127,7 +135,7 @@ async fn poll_peers(state: &State, client: &Client, url: &str, netid: u64, kind:
     }
 
     sql.push_str(&format!(
-        " on conflict (ethereum_address, netid, kind) do update set update_dt='{}', network_id=excluded.network_id, network_addr=excluded.network_addr",
+        " on conflict (ethereum_address, network_ip, netid, kind) do update set update_dt='{}', network_id=excluded.network_id, network_port=least(peers.network_port, excluded.network_port)",
         peersif.client_info.datetime
     ));
 

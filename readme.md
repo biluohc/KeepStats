@@ -1,8 +1,9 @@
 # Keepstats API Server
     Keepstats api server powered by actix-web and sqlx
 
-### MaxmindDB Download
-maxminddb: https://github.com/wp-statistics/GeoLite2-City
+### GeoIP powered by free MaxmindDB
+It's not bundled: you have to download it separately.
+Download "GeoLite2 City" dataset in binary format from [dev.maxmind.com](https://dev.maxmind.com/geoip/geoip2/geolite2/#Downloads) or [wp-statistics](https://github.com/wp-statistics/GeoLite2-City) and unzip it.
 
 ### Compile
 `make build`
@@ -10,7 +11,7 @@ maxminddb: https://github.com/wp-statistics/GeoLite2-City
 ### Generate Docker image
 `make image`
 
-### Runn
+### Run
 `make run`
 
 ### Test the api

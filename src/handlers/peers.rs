@@ -24,7 +24,7 @@ async fn peers(state: AppState, form: web::Query<Form>) -> impl Responder {
     let peers = match sqlx::query_as!(
         Peer,
         r#"
-    SELECT id, netid, kind, network_id, network_addr, ethereum_address, create_dt, update_dt
+    SELECT id, netid, kind, network_id, network_ip, network_port, ethereum_address, create_dt, update_dt
     FROM peers
     where netid = $1 and kind = $2 and update_dt > now() - $3 * INTERVAL '1hour'
             ;"#,

@@ -37,7 +37,7 @@ pub struct Location {
 
 impl State {
     pub fn lookup(&self, ip: &str) -> crate::how::AnyResult<Location> {
-        let ip = ip.trim().parse::<std::net::SocketAddr>()?.ip();
+        let ip = ip.trim().parse::<std::net::IpAddr>()?;
         let ifs: CityIsp = self.maxminddb.lookup(ip)?;
 
         Ok(Location {

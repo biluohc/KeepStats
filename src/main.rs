@@ -47,7 +47,7 @@ async fn main() -> std::io::Result<()> {
             .default_service(web::route().to(api::notfound))
             .service(web::scope("/api").configure(handlers::init))
             // .service(web::scope("/user").configure(users::routes::init))
-            .service(Files::new("/static", "target").redirect_to_slash_directory().show_files_listing().use_last_modified(true))
+            .service(Files::new("/static", "static").redirect_to_slash_directory().show_files_listing().use_last_modified(true))
     })
     .keep_alive(300)
     .bind(&state.config.listen)?
