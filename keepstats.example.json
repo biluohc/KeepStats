@@ -18,7 +18,7 @@
             {
                 "netid": 1,
                 "keep_core": [
-                    // "http://127.0.0.1:3911/diagnostics"
+                    "http://127.0.0.1:3921/diagnostics"
                 ],
                 "keep_ecdsa": []
             }
