@@ -41,18 +41,8 @@ impl State {
         let ifs: CityIsp = self.maxminddb.lookup(ip)?;
 
         Ok(Location {
-            country: ifs
-                .country
-                .as_ref()
-                .and_then(|c| c.names.as_ref())
-                .and_then(|ns| ns.get("en"))
-                .map(|s| s.to_string()),
-            city: ifs
-                .city
-                .as_ref()
-                .and_then(|c| c.names.as_ref())
-                .and_then(|ns| ns.get("en"))
-                .map(|s| s.to_string()),
+            country: ifs.country.as_ref().and_then(|c| c.names.as_ref()).and_then(|ns| ns.get("en")).map(|s| s.to_string()),
+            city: ifs.city.as_ref().and_then(|c| c.names.as_ref()).and_then(|ns| ns.get("en")).map(|s| s.to_string()),
             latitude: ifs.location.as_ref().and_then(|loc| loc.latitude).clone(),
             longitude: ifs.location.as_ref().and_then(|loc| loc.longitude).clone(),
         })
@@ -62,10 +52,7 @@ impl State {
         T: AsRef<str> + serde::Serialize,
     {
         let mut json = json!(data);
-        json["location"] = json!(self
-            .lookup(data.as_ref())
-            .map_err(|e| error!("lookup location for {} failed: {:?}", data.as_ref(), e))
-            .ok());
+        json["location"] = json!(self.lookup(data.as_ref()).map_err(|e| error!("lookup location for {} failed: {:?}", data.as_ref(), e)).ok());
 
         json
     }

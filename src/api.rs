@@ -1,9 +1,7 @@
 use serde::Serialize;
 use std::borrow::Cow;
 
-use actix_web::{
-    error, http::StatusCode, Error, HttpRequest, HttpResponse, Responder, ResponseError,
-};
+use actix_web::{error, http::StatusCode, Error, HttpRequest, HttpResponse, Responder, ResponseError};
 use futures::future::{ready, Ready};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -15,11 +13,7 @@ pub struct ApiResult<T = ()> {
 
 impl<T: Serialize> ApiResult<T> {
     pub fn new() -> Self {
-        Self {
-            code: 200,
-            msg: None,
-            data: None,
-        }
+        Self { code: 200, msg: None, data: None }
     }
     pub fn code(mut self, code: i32) -> Self {
         self.code = code;
@@ -41,20 +35,11 @@ impl<T: Serialize> ApiResult<T> {
         self.to_resp()
     }
     pub fn log(&self, req: &HttpRequest) {
-        info!(
-            "{} \"{} {} {:?}\" {}",
-            req.peer_addr().unwrap(),
-            req.method(),
-            req.uri(),
-            req.version(),
-            self.code
-        );
+        info!("{} \"{} {} {:?}\" {}", req.peer_addr().unwrap(), req.method(), req.uri(), req.version(), self.code);
     }
     pub fn to_resp(&self) -> HttpResponse {
         let resp = match serde_json::to_string(self) {
-            Ok(json) => HttpResponse::Ok()
-                .content_type("application/json")
-                .body(json),
+            Ok(json) => HttpResponse::Ok().content_type("application/json").body(json),
             Err(e) => Error::from(e).into(),
         };
 
@@ -119,10 +104,7 @@ impl<T: Serialize> Responder for &ApiResult<T> {
 }
 
 // return 200 all
-pub fn json_error_handler<E: std::fmt::Display + std::fmt::Debug + 'static>(
-    err: E,
-    req: &HttpRequest,
-) -> error::Error {
+pub fn json_error_handler<E: std::fmt::Display + std::fmt::Debug + 'static>(err: E, req: &HttpRequest) -> error::Error {
     let detail = err.to_string();
     let api = ApiResult::new().with_data(()).code(400).with_msg(detail);
     let response = api.log_to_resp(req);
@@ -131,10 +113,7 @@ pub fn json_error_handler<E: std::fmt::Display + std::fmt::Debug + 'static>(
 }
 
 pub async fn notfound(req: HttpRequest) -> Result<HttpResponse, Error> {
-    let api = ApiResult::new()
-        .with_data(())
-        .code(404)
-        .with_msg("route not found");
+    let api = ApiResult::new().with_data(()).code(404).with_msg("route not found");
 
     api.respond_to(&req).await
 }

@@ -1,29 +1,48 @@
 use actix_web::{get, web, Responder};
 // use serde_json::Value;
 
-use crate::{api::ApiResult, models::peer::Peer, state::AppState};
+use crate::{api::ApiResult, models::peer::*, state::AppState};
 
 #[serde(rename_all = "camelCase")]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Form {
     pub kind: String,
     pub netid: i16,
+    #[serde(default)]
     pub last_active_hours: u16,
+    #[serde(default)]
+    pub last_active_days: u16,
+}
+
+impl Form {
+    fn fix_and_check<T: serde::Serialize>(&mut self, days: bool) -> Result<(), ApiResult<Vec<T>>> {
+        self.kind = self.kind.to_lowercase();
+
+        let (code, msg) = if !["keep_core", "keep_ecdsa"].contains(&self.kind.as_str()) {
+            (400, "invalid kind")
+        } else if self.netid > 3 {
+            (400, "invalid ethereum netid")
+        } else if days && (self.last_active_days <= 0 || self.last_active_days > 90) {
+            (400, "invalid last_active_days")
+        } else if (!days) && (self.last_active_hours <= 0 || self.last_active_hours > 24) {
+            (400, "invalid last_active_hours")
+        } else {
+            return Ok(());
+        };
+
+        Err(ApiResult::new().code(code).with_msg(msg))
+    }
 }
 
 // curl  -v  'localhost:8080/api/peers?netid=3&kind=keep_core&lastActiveHours=25' | jq .
 #[get("/peers")]
 async fn peers(state: AppState, form: web::Query<Form>) -> impl Responder {
     let mut form = form.into_inner();
-    form.kind = form.kind.to_lowercase();
-
-    if form.netid > 3 {
-        return ApiResult::new()
-            .code(400)
-            .with_msg("invalid ethereum netid");
+    if let Err(e) = form.fix_and_check(false) {
+        return e;
     }
 
-    let peers = match sqlx::query_as!(
+    let ps = match sqlx::query_as!(
         Peer,
         r#"
     SELECT id, netid, kind, network_id, network_ip, network_port, ethereum_address, create_dt, update_dt
@@ -43,12 +62,42 @@ async fn peers(state: AppState, form: web::Query<Form>) -> impl Responder {
             return ApiResult::new().code(404).with_msg(e.to_string());
         }
     };
-    debug!("get peers by {:?} ok: {}", form, peers.len());
+    debug!("get peers by {:?} ok: {}", form, ps.len());
 
-    let json = peers
-        .iter()
-        .map(|p| state.json_with_location(&p))
-        .collect::<Vec<_>>();
+    let json = ps.iter().map(|p| state.json_with_location(&p)).collect::<Vec<_>>();
 
     ApiResult::new().with_data(json)
+}
+
+// curl  -v  'localhost:8080/api/peerstats?netid=3&kind=keep_core&lastActiveDays=30' | jq .
+#[get("/peerstats")]
+async fn peerstats(state: AppState, form: web::Query<Form>) -> impl Responder {
+    let mut form = form.into_inner();
+    if let Err(e) = form.fix_and_check(true) {
+        return e;
+    }
+
+    let ps = match sqlx::query_as!(
+        PeerStats,
+        r#"
+    SELECT id, netid, kind, date, online, create_dt
+    FROM peerstats
+    where netid = $1 and kind = $2 and date > now() - $3 * INTERVAL '1day'
+            ;"#,
+        form.netid,
+        form.kind,
+        form.last_active_days as f64
+    )
+    .fetch_all(&state.pg)
+    .await
+    {
+        Ok(ps) => ps,
+        Err(e) => {
+            error!("get peerstats by {:?} failed: {}", form, e);
+            return ApiResult::new().code(404).with_msg(e.to_string());
+        }
+    };
+    debug!("get peerstats by {:?} ok: {}", form, ps.len());
+
+    ApiResult::new().with_data(ps)
 }

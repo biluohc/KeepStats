@@ -21,3 +21,16 @@ impl AsRef<str> for Peer {
         &self.network_ip
     }
 }
+
+#[serde(rename_all = "camelCase")]
+#[derive(FromRow, Serialize, Deserialize, Debug)]
+pub struct PeerStats {
+    // #[serde(default)]
+    pub id: i64,
+    // #[serde(skip_serializing)]
+    pub netid: i16,
+    pub kind: String,
+    pub online: i32,
+    pub date: DateTime,
+    pub create_dt: DateTime,
+}

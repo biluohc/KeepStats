@@ -6,7 +6,7 @@ create table peers (
     network_ip varchar(60) not null,
     network_port int4 not null,
     ethereum_address varchar(50) not null,
-    create_dt timestamptz not null default current_timestamp, -- 'create datetiem'
+    create_dt timestamptz not null default current_timestamp, -- 'create datetime'
     update_dt timestamptz not null default current_timestamp, -- 'udpate datetime'
     CONSTRAINT e2k UNIQUE (ethereum_address, network_ip, netid, kind)
 );
