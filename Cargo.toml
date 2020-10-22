@@ -16,6 +16,12 @@ features = [ "runtime-actix", "macros", "chrono", "decimal", "uuid", "json", "po
 git = "https://github.com/launchbadge/sqlx"
 # path = "../sqlx"
 
+[dependencies.web3]
+version = "0.14"
+default-features = false
+features = ["http-tls"] #, "ws-tls-tokio"]
+git = "https://github.com/tomusdrw/rust-web3"
+
 [dependencies]
 structopt = "0.3.16"
 reqwest = { version = "0.10.5", default-features = false, features = ["rustls-tls", "cookies", "stream", "gzip", "json"] }

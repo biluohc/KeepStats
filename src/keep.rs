@@ -8,17 +8,20 @@ use std::{collections::HashMap as Map, time::Duration};
 use tokio::task::spawn;
 use tokio::time::delay_for as sleep;
 
+pub const KEEP_CORE: &str = "keep_core";
+pub const KEEP_ECDSA: &str = "keep_ecdsa";
+
 pub fn poll_keepstats(state: &State) {
     let keep = &state.config.keep;
     let client = Client::builder()
-        .connect_timeout(Duration::from_secs(keep.request_timeout))
-        .timeout(Duration::from_secs(keep.request_timeout))
+        .connect_timeout(Duration::from_secs(state.config.request_timeout))
+        .timeout(Duration::from_secs(state.config.request_timeout))
         .build()
         .expect("new reqwest::Client");
 
     for keep_info in &keep.urls {
-        spawn(loop_poll_peers(state.clone(), client.clone(), keep_info.keep_core.clone(), keep_info.netid, "keep_core"));
-        spawn(loop_poll_peers(state.clone(), client.clone(), keep_info.keep_ecdsa.clone(), keep_info.netid, "keep_ecdsa"));
+        spawn(loop_poll_peers(state.clone(), client.clone(), keep_info.keep_core.clone(), keep_info.netid, KEEP_CORE));
+        spawn(loop_poll_peers(state.clone(), client.clone(), keep_info.keep_ecdsa.clone(), keep_info.netid, KEEP_ECDSA));
     }
 }
 

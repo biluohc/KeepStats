@@ -11,13 +11,23 @@ pub struct Config {
     pub listen: String,
     pub jwt_priv: String,
     pub maxminddb: String,
+    pub request_timeout: u64,
+    pub mainnet_rpc: String,
+    pub ropsten_rpc: String,
     pub keep: KeepConfig,
+    pub token: Vec<TokenConfig>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct TokenConfig {
+    pub netid: u64,
+    pub contract_address_keep: String,
+    pub contract_address_tbtc: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct KeepConfig {
     pub urls: Vec<KeepInfo>,
-    pub request_timeout: u64,
     pub poll_interval: u64,
 }
 

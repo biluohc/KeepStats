@@ -1,7 +1,7 @@
 use actix_web::{get, web, Responder};
 // use serde_json::Value;
 
-use crate::{api::ApiResult, models::peer::*, state::AppState};
+use crate::{api::ApiResult, keep::*, models::peer::*, state::AppState};
 
 #[serde(rename_all = "camelCase")]
 #[derive(Serialize, Deserialize, Debug)]
@@ -11,19 +11,19 @@ pub struct Form {
     #[serde(default)]
     pub last_active_hours: u16,
     #[serde(default)]
-    pub last_active_days: u16,
+    pub days: u16,
 }
 
 impl Form {
     fn fix_and_check<T: serde::Serialize>(&mut self, days: bool) -> Result<(), ApiResult<Vec<T>>> {
         self.kind = self.kind.to_lowercase();
 
-        let (code, msg) = if !["keep_core", "keep_ecdsa"].contains(&self.kind.as_str()) {
+        let (code, msg) = if ![KEEP_CORE, KEEP_ECDSA].contains(&self.kind.as_str()) {
             (400, "invalid kind")
         } else if self.netid > 3 {
             (400, "invalid ethereum netid")
-        } else if days && (self.last_active_days <= 0 || self.last_active_days > 90) {
-            (400, "invalid last_active_days")
+        } else if days && (self.days <= 0 || self.days > 90) {
+            (400, "invalid days")
         } else if (!days) && (self.last_active_hours <= 0 || self.last_active_hours > 24) {
             (400, "invalid last_active_hours")
         } else {
@@ -34,7 +34,7 @@ impl Form {
     }
 }
 
-// curl  -v  'localhost:8080/api/peers?netid=3&kind=keep_core&lastActiveHours=25' | jq .
+// curl  -v  'localhost:8080/api/peers?netid=3&kind=keep_core&lastActiveHours=2' | jq .
 #[get("/peers")]
 async fn peers(state: AppState, form: web::Query<Form>) -> impl Responder {
     let mut form = form.into_inner();
@@ -69,7 +69,7 @@ async fn peers(state: AppState, form: web::Query<Form>) -> impl Responder {
     ApiResult::new().with_data(json)
 }
 
-// curl  -v  'localhost:8080/api/peerstats?netid=3&kind=keep_core&lastActiveDays=30' | jq .
+// curl  -v  'localhost:8080/api/peerstats?netid=3&kind=keep_core&days=30' | jq .
 #[get("/peerstats")]
 async fn peerstats(state: AppState, form: web::Query<Form>) -> impl Responder {
     let mut form = form.into_inner();
@@ -86,7 +86,7 @@ async fn peerstats(state: AppState, form: web::Query<Form>) -> impl Responder {
             ;"#,
         form.netid,
         form.kind,
-        form.last_active_days as f64
+        form.days as f64
     )
     .fetch_all(&state.pg)
     .await

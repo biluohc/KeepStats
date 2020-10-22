@@ -4,8 +4,10 @@
     "listen": "0.0.0.0:8080",
     "jwt_priv": "0xa06f853898a9dd4f32441a56879c52878f96c42730ed31c50e00",
     "maxminddb": "../GeoLite2-City.mmdb",
+    "request_timeout": 5,
+    "mainnet_rpc": "https://mainnet.infura.io/v3/",
+    "ropsten_rpc": "https://ropsten.infura.io/v3/",
     "keep": {
-        "request_timeout": 5,
         "poll_interval": 20,
         "urls": [
             {
@@ -23,5 +25,17 @@
                 "keep_ecdsa": []
             }
         ]
-    }
+    },
+    "token": [
+        {
+            "netid": 1,
+            "contract_address_keep": "0x85eee30c52b0b379b046fb0f85f4f3dc3009afec",
+            "contract_address_tbtc": "0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa"
+        },
+        {
+            "netid": 3,
+            "contract_address_keep": "0x343d3dda00415289cdd4e8030f63a4a5a2548ff9",
+            "contract_address_tbtc": "0x7c07c42973047223f80c4a69bb62d5195460eb5f"
+        }
+    ]
 }

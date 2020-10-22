@@ -23,7 +23,9 @@ pub mod keep;
 pub mod middlewares;
 pub mod models;
 pub mod state;
+pub mod token;
 pub mod users;
+pub mod util;
 
 use config::{Config, Opt};
 
@@ -34,8 +36,10 @@ async fn main() -> std::io::Result<()> {
     let state = Config::parse_from_file(&opt.config).into_state().await;
 
     let state2 = state.clone();
-    agg::agg_keepstats(&state2);
-    keep::poll_keepstats(&state2);
+    // agg::agg_keepstats(&state2);
+    token::poll_tokenstats(&state2);
+    // keep::poll_keepstats(&state2);
+
     HttpServer::new(move || {
         App::new()
             .data(state2.clone())
