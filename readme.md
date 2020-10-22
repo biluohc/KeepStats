@@ -53,8 +53,12 @@ make run
 ```
 # netid is ethereum netid, mainnet is 1, ropsten is 3.
 
-curl  -v  'localhost:8080/api/peers?netid=3&kind=keep_core&lastActiveHours=25'
-curl  -v  'localhost:8080/api/peers?netid=3&kind=keep_ecdsa&lastActiveHours=25'
+curl  -v  'localhost:8080/api/peers?netid=3&kind=keep_core&lastActiveHours=2'
+curl  -v  'localhost:8080/api/peers?netid=3&kind=keep_ecdsa&lastActiveHours=5'
+
+curl  -v  'localhost:8080/api/peerstats?netid=3&kind=keep_core&days=30' | jq .
+curl  -v  'localhost:8080/api/tokenstats?netid=3&token=keep&days=10' | jq .
+curl  -v  'localhost:8080/api/tokenstats?netid=3&token=tbtc&days=10' | jq .
 ```
 
 ## How it works

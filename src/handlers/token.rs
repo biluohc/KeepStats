@@ -40,7 +40,7 @@ async fn tokenstats(state: AppState, form: web::Query<Form>) -> impl Responder {
     let ps = match sqlx::query_as!(
         TokenStats,
         r#"
-    SELECT id, netid, token, date, create_dt, total_supply
+    SELECT id, netid, token, date, create_dt, total_supply::text
     FROM tokenstats
     where netid = $1 and token = $2 and date >= now() - $3 * INTERVAL '1day'
             ;"#,

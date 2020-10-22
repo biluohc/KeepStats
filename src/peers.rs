@@ -11,7 +11,7 @@ use tokio::time::delay_for as sleep;
 pub const KEEP_CORE: &str = "keep_core";
 pub const KEEP_ECDSA: &str = "keep_ecdsa";
 
-pub fn poll_keepstats(state: &State) {
+pub fn poll_peers(state: &State) {
     let keep = &state.config.keep;
     let client = Client::builder()
         .connect_timeout(Duration::from_secs(state.config.request_timeout))
@@ -33,7 +33,7 @@ async fn loop_poll_peers(state: State, client: Client, urls: Vec<String>, netid:
     let sleep_interval = Duration::from_secs(state.config.keep.poll_interval);
     loop {
         for url in &urls {
-            poll_peers(&state, &client, url.as_str(), netid, kind)
+            _poll_peers(&state, &client, url.as_str(), netid, kind)
                 .await
                 .map(|(n, rows)| info!("poll_peers({}, {}) from {} got {} peers, {} rows affected", netid, kind, url, n, rows))
                 .map_err(|e| error!("poll_peers({}, {}) from {} failed {}", netid, kind, url, e))
@@ -68,7 +68,7 @@ pub struct KeepPeers {
     connected_peers: Vec<KeepPeer>,
 }
 
-async fn poll_peers(state: &State, client: &Client, url: &str, netid: u64, kind: &str) -> AnyResult<(u64, u64)> {
+async fn _poll_peers(state: &State, client: &Client, url: &str, netid: u64, kind: &str) -> AnyResult<(u64, u64)> {
     let peersif = client.get(url).send().await?.json::<KeepPeers>().await?;
     let mut peers = Vec::with_capacity(peersif.connected_peers.len() + 1);
 
