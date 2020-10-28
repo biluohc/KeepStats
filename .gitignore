@@ -4,3 +4,7 @@
 *main.html
 *.DS_Store
 keepstats.json
+gomain/ethabi
+gomain/rust-web3
+gomain/main
+

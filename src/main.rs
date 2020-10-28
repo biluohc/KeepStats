@@ -22,6 +22,7 @@ pub mod how;
 pub mod middlewares;
 pub mod models;
 pub mod peers;
+pub mod staking;
 pub mod state;
 pub mod token;
 pub mod users;
@@ -36,6 +37,7 @@ async fn main() -> std::io::Result<()> {
     let state = Config::parse_from_file(&opt.config).into_state().await;
 
     let state2 = state.clone();
+    return Ok(staking::poll_stakingstats(&state).await);
     agg::agg_keepstats(&state2);
     token::poll_tokenstats(&state2);
     peers::poll_peers(&state2);

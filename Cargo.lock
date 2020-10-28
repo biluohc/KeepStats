@@ -1612,6 +1612,7 @@ dependencies = [
  "async-trait",
  "bcrypt",
  "chrono",
+ "ethabi",
  "futures 0.3.5",
  "hex",
  "json5",
@@ -3532,7 +3533,7 @@ dependencies = [
 [[package]]
 name = "web3"
 version = "0.14.0"
-source = "git+https://github.com/tomusdrw/rust-web3#2c33873488cbf9a27bf38d665138b227521bf51a"
+source = "git+https://github.com/tomusdrw/rust-web3#96b7ac3ec96f8574e22d44b98e19cdfa8aed3952"
 dependencies = [
  "arrayvec",
  "base64 0.13.0",

@@ -21,6 +21,7 @@ version = "0.14"
 default-features = false
 features = ["http-tls"] #, "ws-tls-tokio"]
 git = "https://github.com/tomusdrw/rust-web3"
+# path = "gomain/rust-web3"
 
 [dependencies]
 structopt = "0.3.16"
@@ -35,6 +36,7 @@ serde = { version = "1.0.115", features = ["derive"] }
 serde_qs = "0.6.1"
 serde_json = "1.0.57"
 json5 = "0.2.8"
+ethabi = "12.0"
 ring = "0.16.15"
 bcrypt = "0.8.2"
 hex = "0.4.2"
