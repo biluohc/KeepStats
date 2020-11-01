@@ -30,12 +30,16 @@
         {
             "netid": 1,
             "contract_address_keep": "0x85eee30c52b0b379b046fb0f85f4f3dc3009afec",
-            "contract_address_tbtc": "0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa"
+            "contract_address_tbtc": "0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa",
+            "contract_address_token_staking": "0x6D1140a8c8e6Fac242652F0a5A8171b898c67600",
+            "contract_address_keep_bonding": "0x27321f84704a599aB740281E285cc4463d89A3D5"
         },
         {
             "netid": 3,
             "contract_address_keep": "0x343d3dda00415289cdd4e8030f63a4a5a2548ff9",
-            "contract_address_tbtc": "0x7c07c42973047223f80c4a69bb62d5195460eb5f"
+            "contract_address_tbtc": "0x7c07c42973047223f80c4a69bb62d5195460eb5f",
+            "contract_address_token_staking": "0x234d2182B29c6a64ce3ab6940037b5C8FdAB608e",
+            "contract_address_keep_bonding": "0x60535a59b4e71f908f3feb0116f450703fb35ed8"
         }
     ]
 }

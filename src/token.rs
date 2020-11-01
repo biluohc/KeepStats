@@ -16,6 +16,7 @@ const TOKEN_ABI: &str = include_str!("token.abi.keep.json");
 
 pub const TOKEN_KEEP: &str = "KEEP";
 pub const TOKEN_TBTC: &str = "TBTC";
+pub const TOKEN_ETH: &str = "ETH";
 
 /*
 # mainnet
@@ -37,8 +38,20 @@ pub fn poll_tokenstats(state: &State) {
             }
         };
 
-        spawn(loop_poll(TOKEN_KEEP, token.netid, token.contract_address_keep.to_owned(), rpc.to_string(), state.clone()));
-        spawn(loop_poll(TOKEN_TBTC, token.netid, token.contract_address_tbtc.to_owned(), rpc.to_string(), state.clone()));
+        spawn(loop_poll(
+            TOKEN_KEEP,
+            token.netid,
+            token.contract_address_keep.to_owned(),
+            rpc.to_string(),
+            state.clone(),
+        ));
+        spawn(loop_poll(
+            TOKEN_TBTC,
+            token.netid,
+            token.contract_address_tbtc.to_owned(),
+            rpc.to_string(),
+            state.clone(),
+        ));
     }
 }
 
@@ -46,7 +59,10 @@ async fn loop_poll(token: &'static str, netid: u64, ca: String, rpc: String, sta
     loop {
         match poll(token, netid, &ca, &rpc, &state).await {
             Ok(rows) => {
-                info!("poll({}, {}, {}) totalSupply rows_affected: {}", rpc, token, ca, rows);
+                info!(
+                    "poll({}, {}, {}) totalSupply rows_affected: {}",
+                    rpc, token, ca, rows
+                );
                 sleep(Duration::from_secs(60 * 60)).await
             }
             Err(e) => {
@@ -81,6 +97,8 @@ insert into tokenstats (date, netid, token, total_supply) values(date(current_ti
 async fn token_supply(web3: &Web3<Http>, ca: &str) -> AnyResult<Decimal> {
     let ca: H160 = parse(ca)?;
     let contract = Contract::from_json(web3.eth(), ca, TOKEN_ABI.as_bytes())?;
-    let result: U256 = contract.query("totalSupply", (), None, Options::default(), None).await?;
+    let result: U256 = contract
+        .query("totalSupply", (), None, Options::default(), None)
+        .await?;
     Ok(result.to_string().parse()?)
 }

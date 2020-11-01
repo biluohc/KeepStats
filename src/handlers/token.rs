@@ -19,7 +19,7 @@ impl Form {
             (400, "invalid token")
         } else if self.netid > 3 {
             (400, "invalid ethereum netid")
-        } else if self.days <= 0 || self.days > 90 {
+        } else if self.days <= 0 || self.days > 91 {
             (400, "invalid days")
         } else {
             return Ok(());

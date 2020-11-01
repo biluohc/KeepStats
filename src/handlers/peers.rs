@@ -22,9 +22,9 @@ impl Form {
             (400, "invalid kind")
         } else if self.netid > 3 {
             (400, "invalid ethereum netid")
-        } else if days && (self.days <= 0 || self.days > 90) {
+        } else if days && (self.days <= 0 || self.days > 91) {
             (400, "invalid days")
-        } else if (!days) && (self.last_active_hours <= 0 || self.last_active_hours > 24) {
+        } else if (!days) && (self.last_active_hours <= 0 || self.last_active_hours > 25) {
             (400, "invalid last_active_hours")
         } else {
             return Ok(());
@@ -64,7 +64,10 @@ async fn peers(state: AppState, form: web::Query<Form>) -> impl Responder {
     };
     debug!("get peers by {:?} ok: {}", form, ps.len());
 
-    let json = ps.iter().map(|p| state.json_with_location(&p)).collect::<Vec<_>>();
+    let json = ps
+        .iter()
+        .map(|p| state.json_with_location(&p))
+        .collect::<Vec<_>>();
 
     ApiResult::new().with_data(json)
 }

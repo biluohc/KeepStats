@@ -1011,6 +1011,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethabi-derive"
+version = "12.0.0"
+dependencies = [
+ "ethabi",
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "ethbloom"
 version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1613,6 +1624,7 @@ dependencies = [
  "bcrypt",
  "chrono",
  "ethabi",
+ "ethabi-derive",
  "futures 0.3.5",
  "hex",
  "json5",
@@ -1622,6 +1634,7 @@ dependencies = [
  "mobc",
  "mobc-redis",
  "nonblock-logger",
+ "rand",
  "reqwest",
  "ring",
  "rust_decimal",

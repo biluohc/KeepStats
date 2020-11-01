@@ -23,6 +23,8 @@ pub struct TokenConfig {
     pub netid: u64,
     pub contract_address_keep: String,
     pub contract_address_tbtc: String,
+    pub contract_address_token_staking: String,
+    pub contract_address_keep_bonding: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -59,8 +61,12 @@ impl Config {
         let mut pool_options = PoolOptions::new();
 
         if let Some(opstr) = url::Url::parse(&self.pg).expect("Invalid PG URL").query() {
-            if let Some(ops) = serde_qs::from_str::<DbOptions>(opstr).map_err(|e| error!("serde_qs::from_str::<DbOptions> failed: {}", e)).ok() {
-                pool_options = pool_options.connect_timeout(std::time::Duration::from_secs(ops.timeout));
+            if let Some(ops) = serde_qs::from_str::<DbOptions>(opstr)
+                .map_err(|e| error!("serde_qs::from_str::<DbOptions> failed: {}", e))
+                .ok()
+            {
+                pool_options =
+                    pool_options.connect_timeout(std::time::Duration::from_secs(ops.timeout));
 
                 if !ops.server_timezone.is_empty() {
                     // UTC, +00:00, HongKong, etc
@@ -80,11 +86,17 @@ impl Config {
         }
 
         let pg = pool_options.connect(&self.pg).await.expect("pg open");
-        let kvm = RedisConnectionManager::new(Client::open(self.redis.clone()).expect("redis open"));
+        let kvm =
+            RedisConnectionManager::new(Client::open(self.redis.clone()).expect("redis open"));
         let maxminddb = maxminddb::Reader::open_readfile(&self.maxminddb).expect("maxminddb open");
         let kv = KvPool::builder().build(kvm);
 
-        Arc::new(State { config: self, pg, kv, maxminddb })
+        Arc::new(State {
+            config: self,
+            pg,
+            kv,
+            maxminddb,
+        })
     }
     // generate and show config string
     pub fn show() {
@@ -94,7 +106,13 @@ impl Config {
 }
 
 pub fn version_with_gitif() -> &'static str {
-    concat!(env!("CARGO_PKG_VERSION"), " ", env!("VERGEN_COMMIT_DATE"), ": ", env!("VERGEN_SHA_SHORT"))
+    concat!(
+        env!("CARGO_PKG_VERSION"),
+        " ",
+        env!("VERGEN_COMMIT_DATE"),
+        ": ",
+        env!("VERGEN_SHA_SHORT")
+    )
 }
 
 #[derive(structopt::StructOpt, Debug)]
@@ -111,7 +129,12 @@ pub struct Opt {
     pub verbose: u8,
 
     /// Output file
-    #[structopt(short = "c", long = "config", parse(from_os_str), default_value = "keepstats.json")]
+    #[structopt(
+        short = "c",
+        long = "config",
+        parse(from_os_str),
+        default_value = "keepstats.json"
+    )]
     pub config: PathBuf,
 }
 
@@ -128,8 +151,16 @@ impl Opt {
             _more => LevelFilter::Trace,
         };
 
-        let formater = BaseFormater::new().local(true).color(true).level(4).formater(format);
-        let filter = BaseFilter::new().starts_with(true).notfound(true).max_level(level).chain("sqlx", LevelFilter::Warn);
+        let formater = BaseFormater::new()
+            .local(true)
+            .color(true)
+            .level(4)
+            .formater(format);
+        let filter = BaseFilter::new()
+            .starts_with(true)
+            .notfound(true)
+            .max_level(level)
+            .chain("sqlx", LevelFilter::Warn);
 
         let handle = NonblockLogger::new()
             .filter(filter)
@@ -151,7 +182,10 @@ use nonblock_logger::{
 };
 
 pub fn format(base: &BaseFormater, record: &Record) -> String {
-    let level = FixedLevel::with_color(record.level(), base.color_get()).length(base.level_get()).into_colored().into_coloredfg();
+    let level = FixedLevel::with_color(record.level(), base.color_get())
+        .length(base.level_get())
+        .into_colored()
+        .into_coloredfg();
 
     format!(
         "[{} {}#{}:{} {}] {}\n",

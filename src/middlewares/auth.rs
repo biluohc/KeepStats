@@ -43,17 +43,26 @@ impl FromRequest for AuthorizationService {
                 token.map(|p| p.access_token.into()).ok()
             });
 
-        match token.as_ref().ok_or_else(|| Cow::Borrowed("Unauthorized")).and_then(|token| {
-            let state = req.app_data::<AppStateRaw>().expect("get AppStateRaw");
-            let key = state.config.jwt_priv.as_bytes();
-            match decode::<Claims>(token, &DecodingKey::from_secret(key), &Validation::new(Algorithm::HS256)) {
-                Ok(claims) => Ok(AuthorizationService { claims: claims.claims }),
-                Err(e) => {
-                    error!("jwt.decode {} failed: {:?}", token, e);
-                    Err(format!("invalid token: {}", e).into())
+        match token
+            .as_ref()
+            .ok_or_else(|| Cow::Borrowed("Unauthorized"))
+            .and_then(|token| {
+                let state = req.app_data::<AppStateRaw>().expect("get AppStateRaw");
+                let key = state.config.jwt_priv.as_bytes();
+                match decode::<Claims>(
+                    token,
+                    &DecodingKey::from_secret(key),
+                    &Validation::new(Algorithm::HS256),
+                ) {
+                    Ok(claims) => Ok(AuthorizationService {
+                        claims: claims.claims,
+                    }),
+                    Err(e) => {
+                        error!("jwt.decode {} failed: {:?}", token, e);
+                        Err(format!("invalid token: {}", e).into())
+                    }
                 }
-            }
-        }) {
+            }) {
             Ok(service) => ok(service),
             Err(e) => {
                 let api = ApiError::new().code(400).with_msg(e);
