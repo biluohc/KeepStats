@@ -50,7 +50,7 @@ build: image-rust
 	    --workdir $(src_path_docker) \
 		--network host \
 	    ${image_rust}:latest \
-	    bash -c "cd $(src_path_docker)/ && cargo build ${target}"
+	    bash -c "cd $(src_path_docker)/ && cargo build --target-dir target ${target}"
 
 run:
 	docker run -d --restart always --network host -v ${PWD}:/opt --name ${app} ${image_prod}
