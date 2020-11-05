@@ -11,20 +11,19 @@ create table operatorstats (
     CONSTRAINT osp UNIQUE (netid, contract, time)
 );
 
--- PG's distinct liks MySQL/SQLite's any_value
+-- PG's distinct on liks MySQL/SQLite's any_value
 select *
 from (
         select distinct on (addr) addr,
             time,
             data
-        from (
+            from(
                 select *
                 from operatorstats
                 where netid = 3
                     and contract = 'keep_bonding'
-                order by time desc
-                limit 1000000
-            ) a
+            )a
+            order by addr, time desc
     ) b
-order by t ime
+order by addr,time desc
 limit 10

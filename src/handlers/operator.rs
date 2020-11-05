@@ -56,9 +56,8 @@ async fn operatorstats(state: AppState, form: web::Query<Form>) -> impl Responde
                         from operatorstats
                         where netid = $1
                             and contract = $2
-                        order by time desc
-                        limit 1000000
                     ) a
+                    order by addr, time desc
             ) b
         ;"#,
         form.netid,
